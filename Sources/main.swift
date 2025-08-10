@@ -21,6 +21,9 @@ app.activate(options: .activateIgnoringOtherApps)
 
 Thread.sleep(forTimeInterval: 0.5)
 
+clickButton(app: app, text: "All Clear")
+Thread.sleep(forTimeInterval: 2)
+
 print("")
 print("📄 Application Text:")
 print("===================")
@@ -63,6 +66,30 @@ func getCalculatorApp() -> NSRunningApplication {
     }
 
     fatalError("❌ Calculator launched but couldn't find the running process")
+}
+
+func clickButton(app: NSRunningApplication, text: String) {
+    for element in getAllUiElements(from: app) {
+        let role = (try? element.attribute(.role) as Any?) as? String ?? ""
+
+        guard role == "AXButton" else { continue }
+
+        let title = (try? element.attribute(.title) as Any?) as? String ?? ""
+        let description = (try? element.attribute(.description) as Any?) as? String ?? ""
+
+        if title.contains(text) || description.contains(text) {
+            do {
+                let actions = try element.actions()
+                if actions.contains(.press) {
+                    try element.performAction(.press)
+                    print("\n🖱️  Clicked '\(text)' button")
+                    return
+                }
+            } catch {
+                continue
+            }
+        }
+    }
 }
 
 func getAllText(from app: NSRunningApplication) -> [String] {
