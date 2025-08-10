@@ -1,3 +1,4 @@
+import AXSwift
 import AppKit
 
 let arguments = CommandLine.arguments
