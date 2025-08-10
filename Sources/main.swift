@@ -24,6 +24,13 @@ Thread.sleep(forTimeInterval: 0.5)
 clickButton(app: app, text: "All Clear")
 Thread.sleep(forTimeInterval: 2)
 
+print("\n⌨️  Typing: \(expression)")
+
+expression.forEach { char in
+    typeCharacter(String(char))
+    Thread.sleep(forTimeInterval: 0.05)
+}
+
 print("")
 print("📄 Application Text:")
 print("===================")
@@ -90,6 +97,15 @@ func clickButton(app: NSRunningApplication, text: String) {
             }
         }
     }
+}
+
+func typeCharacter(_ char: String) {
+    let unicodeChars = Array(char.utf16)
+    guard let event = CGEvent(keyboardEventSource: nil, virtualKey: 0, keyDown: true) else {
+        return
+    }
+    event.keyboardSetUnicodeString(stringLength: unicodeChars.count, unicodeString: unicodeChars)
+    event.post(tap: .cghidEventTap)
 }
 
 func getAllText(from app: NSRunningApplication) -> [String] {
