@@ -17,6 +17,22 @@ let app = getCalculatorApp()
 print(
     "\n🎯 Found Calculator! PID: \(app.processIdentifier)")
 
+app.activate(options: .activateIgnoringOtherApps)
+
+Thread.sleep(forTimeInterval: 0.5)
+
+print("")
+print("📄 Application Text:")
+print("===================")
+
+let texts = getAllText(from: app)
+
+if texts.isEmpty {
+    print("(No text found)")
+} else {
+    texts.forEach { print($0) }
+}
+
 // ==============================================================
 
 func getCalculatorApp() -> NSRunningApplication {
@@ -47,4 +63,35 @@ func getCalculatorApp() -> NSRunningApplication {
     }
 
     fatalError("❌ Calculator launched but couldn't find the running process")
+}
+
+func getAllText(from app: NSRunningApplication) -> [String] {
+    return getAllUiElements(from: app)
+        .compactMap { element in
+            let role = (try? element.attribute(.role) as Any?) as? String ?? "Unknown"
+            guard role.contains("Text") else { return nil }
+
+            return (try? element.attribute(.value) as Any?).flatMap { value in
+                switch value {
+                case let str as String where !str.isEmpty: return str
+                case let num as NSNumber: return num.stringValue
+                default: return nil
+                }
+            }
+        }
+}
+
+func getAllUiElements(from app: NSRunningApplication) -> [UIElement] {
+    guard let axApp = Application(forProcessID: app.processIdentifier) else { return [] }
+    let windowElements = getAsUIElements(from: try? axApp.attribute(.windows) as Any?)
+    return windowElements.flatMap(collectAllChildren)
+}
+
+func collectAllChildren(from element: UIElement) -> [UIElement] {
+    let children = getAsUIElements(from: try? element.attribute(.children) as Any?)
+    return [element] + children.flatMap(collectAllChildren)
+}
+
+func getAsUIElements(from any: Any?) -> [UIElement] {
+    (any as? [AnyObject])?.compactMap { UIElement($0 as! AXUIElement) } ?? []
 }
