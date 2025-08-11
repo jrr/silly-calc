@@ -19,10 +19,11 @@ print(
 
 app.activate(options: .activateIgnoringOtherApps)
 
-Thread.sleep(forTimeInterval: 0.5)
+Thread.sleep(forTimeInterval: 0.2)
 
-clickButton(app: app, text: "All Clear")
-Thread.sleep(forTimeInterval: 2)
+clearCalculator(app: app)
+
+Thread.sleep(forTimeInterval: 0.2)
 
 print("\n⌨️  Typing: \(expression)")
 
@@ -73,6 +74,33 @@ func getCalculatorApp() -> NSRunningApplication {
     }
 
     fatalError("❌ Calculator launched but couldn't find the running process")
+}
+
+func clearCalculator(app: NSRunningApplication) {
+    // First try to find and click the "All Clear" button
+    for element in getAllUiElements(from: app) {
+        let role = (try? element.attribute(.role) as Any?) as? String ?? ""
+        guard role == "AXButton" else { continue }
+
+        let title = (try? element.attribute(.title) as Any?) as? String ?? ""
+        let description = (try? element.attribute(.description) as Any?) as? String ?? ""
+
+        if title.contains("All Clear") || description.contains("All Clear") {
+            do {
+                let actions = try element.actions()
+                if actions.contains(.press) {
+                    try element.performAction(.press)
+                    print("\n🖱️  Clicked 'All Clear' button")
+                    return
+                }
+            } catch {
+                continue
+            }
+        }
+    }
+
+    print("\n⌨️  AC button not found, clearing with 'c'")
+    typeCharacter("c")
 }
 
 func clickButton(app: NSRunningApplication, text: String) {
